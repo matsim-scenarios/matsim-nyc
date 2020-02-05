@@ -44,6 +44,7 @@
 			<id>ojo-snapshots</id>
 			<url>http://oss.jfrog.org/libs-snapshot</url>
 		</repository>
+		
 		<repository>
   	    	<id>jitpack.io</id>
   	    	<url>https://jitpack.io</url>
@@ -67,6 +68,12 @@
 			<version>${matsim.version}</version>
 			<scope>test</scope>
 		</dependency>
+		
+		<dependency>
+     		<groupId>com.github.SchweizerischeBundesbahnen</groupId>
+     		<artifactId>matsim-sbb-extensions</artifactId>
+    		<version>11.5</version>
+ 		</dependency>
 
 		<!--to get ExamplesUtils:-->
 		<dependency>
@@ -107,6 +114,18 @@
 			<version>${matsim.version}</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.6</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+			<version>3.6.1</version>
+		</dependency>
+
 		<!-- Include the JUnit testing library -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -114,12 +133,6 @@
 			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
-		
-		<dependency>
-     		<groupId>com.github.SchweizerischeBundesbahnen</groupId>
-     		<artifactId>matsim-sbb-extensions</artifactId>
-     		<version>11.5</version>
-		 </dependency>
 	</dependencies>
 
 	<build>

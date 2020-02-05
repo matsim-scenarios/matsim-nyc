@@ -23,28 +23,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.io.FileReader;
-import java.io.BufferedReader;
 
-import javax.inject.Inject;
-
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
-import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.codeexamples.scoring.example16customscoring.PersonLeavesFHVEvent;
-import org.matsim.codeexamples.scoring.example16customscoring.PersonLeavesTaxiEvent;
-import org.matsim.codeexamples.scoring.example16customscoring.PersonParkingEvent;
-import org.matsim.codeexamples.scoring.example16customscoring.RunCustomScoringExampleTaxi.TaxiScoringFunctionFactory;
-import org.matsim.codeexamples.scoring.example16customscoring.TollPersonEvent1;
-import org.matsim.codeexamples.scoring.example16customscoring.TollPersonEvent2;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -56,13 +43,24 @@ import org.matsim.core.network.NetworkChangeEvent.ChangeType;
 import org.matsim.core.network.NetworkChangeEvent.ChangeValue;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import org.matsim.roadpricing.RoadPricingConfigGroup;
 import org.matsim.roadpricing.RoadPricingModule;
 import org.matsim.roadpricing.RoadPricingSchemeUsingTollFactor;
 import org.matsim.roadpricing.TollFactor;
 import org.matsim.vehicles.Vehicle;
 
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import javax.inject.Inject;
+
+import org.matsim.api.core.v01.Id;
+
+import org.matsim.codeexamples.scoring.example16customscoring.PersonParkingEvent;
+import org.matsim.codeexamples.scoring.example16customscoring.PersonLeavesFHVEvent;
+import org.matsim.codeexamples.scoring.example16customscoring.PersonLeavesTaxiEvent;
+import org.matsim.codeexamples.scoring.example16customscoring.RunCustomScoringExampleTaxi.TaxiScoringFunctionFactory;
+import org.matsim.codeexamples.scoring.example16customscoring.TollPersonEvent1;
+import org.matsim.codeexamples.scoring.example16customscoring.TollPersonEvent2;
 
 
 /**
@@ -71,14 +69,13 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
  */
 public class RunTimeDependentNetworkExample {
 
-	/** 
+	/**
 	 * @param args
 	 */
 	public static String [] toll1 = {"320888283_0","60325668_0","415882710_0","232473896_0","49032026_0","644974431_0","360639917_1"};
 	public static String [] toll2 = {"40596823_0","25154607_0","40595084_0","375623292_0","25464382_0","5669174_0","90086370_0","5699313_0","413749473_0","5681925_0","11878036_0","46469739_0"};
-
 	
-	static class ScoreEngine implements PersonEntersVehicleEventHandler,PersonLeavesVehicleEventHandler, LinkLeaveEventHandler {
+	public static class ScoreEngine implements PersonLeavesVehicleEventHandler, LinkLeaveEventHandler {
 
 		private EventsManager eventsManager;
 
@@ -92,16 +89,10 @@ public class RunTimeDependentNetworkExample {
 
 		@Override 
 		public void reset(int iteration) {}
-		
-		@Override
-		public void handleEvent(PersonEntersVehicleEvent event) {
-			
-			vehicle2driver.put(event.getVehicleId(), event.getPersonId());
-		}
 
 		@Override
 		public void handleEvent(PersonLeavesVehicleEvent event) {
-			
+			vehicle2driver.put(event.getVehicleId(), event.getPersonId());
 			if (parkingAt(event.getTime(), event.getPersonId(),event.getVehicleId())) {
 				eventsManager.processEvent(new PersonParkingEvent(event.getTime(), vehicle2driver.get(event.getVehicleId())));
 				//System.out.println("park");
@@ -172,47 +163,24 @@ public class RunTimeDependentNetworkExample {
 			return i;
 		}
 
-	
 
 	}
 	
-
 	public static void main(String[] args) {
 		//URL configurl = IOUtils.newUrl( ExamplesUtils.getTestScenarioURL("equil") , "config.xml" ) ;
-		
-		double ExpressFactor []= new double [6];
-		double ArterialFactor []= new double [6];
-//		double ExpressFactor1 []= {0.467336592,0.480587195,0.476505422,0.418761993,.459317842,0.537386867}; // 33.33m/s ;
-//		double ArterialFactor1 []= {0.5641636642783365,0.5369371118611186,0.5242296534549902,0.5121776613091482,0.5563768903849433,0.61340002106347}; 
-//		double ArterialFactor2 []= {0.5641636642783365,0.5369371118611186,0.5242296534549902,0.5121776613091482,0.5563768903849433,0.61340002106347}; 
-//		double ArterialFactor3 []= {0.5641636642783365,0.5369371118611186,0.5242296534549902,0.5121776613091482,0.5563768903849433,0.61340002106347}; 
-//		
-		for(int i = 0; i < 6; i ++){
-			ExpressFactor[i] = 1;
-			ArterialFactor[i] = 1;
-			//ExpressFactor1[i] = 1;
-//			ArterialFactor1[i] = 1;
-//			ArterialFactor2[i] = 1;
-//			ArterialFactor3[i] = 1;
-		}
-		
-		double ExpressFactor1 []= {0.467336592,0.480587195,0.476505422,0.418761993,0.459317842,0.537386867}; // 33.33m/s 
-		double ArterialFactor1 []= {0.276634, 0.265192,0.261024, 0.254357,0.279059,0.308127}; //22.22 m/s
-		double ArterialFactor2 []= {0.409828,0.392877,0.386702,0.376825,0.413420,0.456485};// 15 m/s
-		double ArterialFactor3 []= {0.737691,0.707178,0.696064, 0.678285,0.744156, 0.821673}; //8.333 m/s
 		
 		Config config = ConfigUtils.loadConfig( args[0] ) ;
 		
 		// "materialize" the road pricing config group:
-		RoadPricingConfigGroup rpConfig = ConfigUtils.addOrGetModule(config, RoadPricingConfigGroup.class) ;
-				
+		//RoadPricingConfigGroup rpConfig = ConfigUtils.addOrGetModule(config, RoadPricingConfigGroup.class) ;
+		
+
 		// configure the time variant network here:
 		config.network().setTimeVariantNetwork(true);
 
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		
 		//config.qsim().setPcuThresholdForFlowCapacityEasing(0.03);
-		
 		// ---
 		
 		// create/load the scenario here.  The time variant network does already have to be set at this point
@@ -221,16 +189,15 @@ public class RunTimeDependentNetworkExample {
 		
 		// ---
 	
+		/*
 		// define the toll factor as an anonymous class.  If more flexibility is needed, convert to "full" class.
-		
-		
 		TollFactor tollFactor = new TollFactor(){
 			@Override public double getTollFactor(Id<Person> personId, Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
 				//VehicleType someVehicleType = null ; // --> replace by something meaningful <--
 
 		       // String type = scenario.getVehicles().getTransitVehicles().getVehicles().get( vehicleId ).getType().getDescription();
 
-		                if ( vehicleId.toString().contains("bus")||vehicleId.toString().contains("subway") ||vehicleId.toString().contains("rail") ) {
+		                if ( vehicleId.toString().contains("bus")||vehicleId.toString().contains("subway") ||vehicleId.toString().contains("rail") ||vehicleId.toString().contains("FHV") ||vehicleId.toString().contains("taxi") ) {
 
 		                                return 0 ;
 
@@ -242,39 +209,9 @@ public class RunTimeDependentNetworkExample {
 				} ;
 				// instantiate the road pricing scheme, with the toll factor inserted:
 		RoadPricingSchemeUsingTollFactor scheme = new RoadPricingSchemeUsingTollFactor(rpConfig.getTollLinksFile(), tollFactor) ;
-		
-				
-				
-//		try{
-//			BufferedReader reader = new BufferedReader(new FileReader("I:\\My Drive\\MATSIM 2018 summer\\Final data\\count\\test.csv"));
-//			reader.readLine();
-//			String line=null;
-//			int i = 0;
-//			double [][] param = new double [24][3];
-//			
-//			while((line=reader.readLine())!=null){
-//				String temp [] = line.split(",");
-//				param[i][0]=Double.parseDouble(temp[1]);
-//				param[i][1]=Double.parseDouble(temp[2]);
-//				param[i][2]=Double.parseDouble(temp[3]);
-//				i+=1;
-//			}
-//			int col=0;
-//			for(int j=0;j<6;j++ ){
-//				ExpressFactor[j]=param[j][col];
-//				ArterialFactor[j]=param[j+6][col];
-//				ExpressFactor1[j]=param[j+12][col];
-//				ArterialFactor1[j]=param[j+18][col];
-//				System.out.println(ExpressFactor[j]+","+ArterialFactor[j]+","+ExpressFactor1[j]+","+ArterialFactor1[j]);
-//			}
-//			
-//			reader.close();
-//			
-//		}
-//		catch(Exception e){
-//			e.printStackTrace();
-//		}
-		
+		*/
+			
+			
 		for ( Link link : scenario.getNetwork().getLinks().values() ) {
 			double speed = link.getFreespeed() ;
 			//final double threshold = 5./3.6;
@@ -313,184 +250,200 @@ public class RunTimeDependentNetworkExample {
 			double ArterialFactor1 []= {1,0.1,1,1,1,1 }; 
 			*/
 			
+			//loop 3
 			
 			/*
 			double ExpressFactor []= {1,0.53467228,0.53467228,1,0.4,0.56532772};
 			double ArterialFactor []= {0.56532772,0.56532772,1,0.53467228,0.56532772,0.4};
 			double ExpressFactor1 []= {1,0.4,1,1,0.4,0.56532772};
 			double ArterialFactor1 []= {0.53467228,0.4,0.56532772,0.56532772,0.56532772,0.56532772}; 
-					*/	
-
-
+			*/
 			
+			double ExpressFactor []= {0.395941339,0.72934814,0.3,0.508829733,0.799287589,0.47065186};
+			double ArterialFactor []= {0.3,0.408829733,0.627227856,0.653203748,0.404058661,0.560570163};
+			double ExpressFactor1 []= {0.472941,0.497564,0.502572, 0.435369, 0.484185, 0.568571}; // 33.33m/s 
+			double ArterialFactor1 []= {0.276634, 0.265192,0.261024, 0.254357,0.279059,0.308127}; //22.22 m/s
+			double ArterialFactor2 []= {0.409828,0.392877,0.386702,0.376825,0.413420,0.456485};// 15 m/s
+			double ArterialFactor3 []= {0.737691,0.707178,0.696064, 0.678285,0.744156, 0.821673}; //8.333 m/s
 			
-				if(linkType.contains("car")){
-					if ( speed > 33 ) {
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(0.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[5] ));
-							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[5] ));
-							event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+
+			/*
+			double ExpressFactor []= {0.56532772,0.4,0.4,0.56532772,0.53467228,1};
+			double ArterialFactor []= {1,1,0.56532772,0.4,1,0.53467228};
+			double ExpressFactor1 []= {0.56532772,0.53467228,0.56532772,0.56532772,0.53467228,1};
+			double ArterialFactor1 []= {0.4,0.53467228,1,1,1,1};
+			*/
+			/*
+			
+			double ExpressFactor []= {0.6,0.6,0.6,0.6,0.6,0.6};
+			double ArterialFactor []= {0.6,0.6,0.6,0.6,0.6,0.6};
+			double ExpressFactor1 []= {0.6,0.6,0.6,0.6,0.6,0.6};
+			double ArterialFactor1 []= {0.6,0.6,0.6,0.6,0.6,0.6};
+			*/			
+
+			if(linkType.contains("car")){
+				if ( speed > 33 ) {
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(0.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[5] ));
+						event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[5] ));
+						event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(7.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[0] ));
+						event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[0] ));
+						event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(10.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[1] ));
+						event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[1] ));
+						event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(13.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[2] ));
+						event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[2] ));
+						event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(16.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[3] ));
+						event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[3] ));
+						event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(19.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[4] ));
+						event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[4] ));
+						event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(22.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[5] ));
+						event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[5] ));
+						event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+				}else{
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(0.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[5] ));
+						if(speed <= 33 && speed >22){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[5] ));
+						}else if(speed <= 22 && speed >10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[5] ));
+						}else if(speed < 10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[5] ));
 						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(7.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[0] ));
-							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[0] ));
-							event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(10.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[1] ));
-							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[1] ));
-							event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(13.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[2] ));
-							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[2] ));
-							event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(16.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[3] ));
-							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[3] ));
-							event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(19.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[4] ));
-							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[4] ));
-							event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(22.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ExpressFactor[5] ));
-							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ExpressFactor1[5] ));
-							event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-					}else{
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(0.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[5] ));
-							if(speed <= 33 && speed >22){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[5] ));
-							}else if(speed <= 22 && speed >10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[5] ));
-							}else if(speed < 10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[5] ));
-							}
-							event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(7.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[0] ));
-							if(speed <= 33 && speed >22){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[0] ));
-							}else if(speed <= 22 && speed >10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[0] ));
-							}else if(speed < 10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[0] ));
-							}event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(10.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[1] ));
-							if(speed <= 33 && speed >22){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[1] ));
-							}else if(speed <= 22 && speed >10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[1] ));
-							}else if(speed < 10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[1] ));
-							}event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(13.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[2] ));
-							if(speed <= 33 && speed >22){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[2] ));
-							}else if(speed <= 22 && speed >10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[2] ));
-							}else if(speed < 10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[2] ));
-							}event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(16.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[3] ));
-							if(speed <= 33 && speed >22){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[3] ));
-							}else if(speed <= 22 && speed >10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[3] ));
-							}else if(speed < 10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[3] ));
-							}event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(19.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[4] ));
-							if(speed <= 33 && speed >22){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[4] ));
-							}else if(speed <= 22 && speed >10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[4] ));
-							}else if(speed < 10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[4] ));
-							}event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
-						{
-							NetworkChangeEvent event = new NetworkChangeEvent(22.*3600.) ;
-							//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
-							event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[5] ));
-							if(speed <= 33 && speed >22){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[5] ));
-							}else if(speed <= 22 && speed >10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[5] ));
-							}else if(speed < 10){
-								event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[5] ));
-							}event.addLink(link);
-							NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
-						}
+						event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(7.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[0] ));
+						if(speed <= 33 && speed >22){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[0] ));
+						}else if(speed <= 22 && speed >10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[0] ));
+						}else if(speed < 10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[0] ));
+						}event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(10.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[1] ));
+						if(speed <= 33 && speed >22){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[1] ));
+						}else if(speed <= 22 && speed >10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[1] ));
+						}else if(speed < 10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[1] ));
+						}event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(13.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[2] ));
+						if(speed <= 33 && speed >22){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[2] ));
+						}else if(speed <= 22 && speed >10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[2] ));
+						}else if(speed < 10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[2] ));
+						}event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(16.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[3] ));
+						if(speed <= 33 && speed >22){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[3] ));
+						}else if(speed <= 22 && speed >10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[3] ));
+						}else if(speed < 10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[3] ));
+						}event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(19.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[4] ));
+						if(speed <= 33 && speed >22){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[4] ));
+						}else if(speed <= 22 && speed >10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[4] ));
+						}else if(speed < 10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[4] ));
+						}event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
+					}
+					{
+						NetworkChangeEvent event = new NetworkChangeEvent(22.*3600.) ;
+						//event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS,  threshold/10 ));
+						event.setFlowCapacityChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, capacity/3600*ArterialFactor[5] ));
+						if(speed <= 33 && speed >22){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor1[5] ));
+						}else if(speed <= 22 && speed >10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor2[5] ));
+						}else if(speed < 10){
+							event.setFreespeedChange(new ChangeValue( ChangeType.ABSOLUTE_IN_SI_UNITS, speed*ArterialFactor3[5] ));
+						}event.addLink(link);
+						NetworkUtils.addNetworkChangeEvent(scenario.getNetwork(),event);
 					}
 				}
-				}
-			
+			}
+			}
 			
 		
 		// ---
 		
 		Controler controler = new Controler( scenario ) ;
 		controler.addOverridingModule(new SwissRailRaptorModule());
-		
-		controler.addOverridingModule( new RoadPricingModule( scheme ) ) ;
+		//controler.addOverridingModule( new RoadPricingModule(  ) ) ;
 
-		//controler.getConfig().controler().setOutputDirectory("D:\\New_calibration\\mode_share_test_intermodal".concat("2"));
-		//Map<String, Double> temp = controler.getConfig().plansCalcRoute().getTeleportedModeSpeeds();
-		//System.out.println(temp);
+
 		
 		controler.addOverridingModule(new AbstractModule() {
 			@Override

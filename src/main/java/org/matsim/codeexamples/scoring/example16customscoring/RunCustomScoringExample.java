@@ -1,3 +1,4 @@
+
 package org.matsim.codeexamples.scoring.example16customscoring;
 
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
+import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -26,6 +28,7 @@ import org.matsim.core.scoring.functions.CharyparNagelMoneyScoring;
 import org.matsim.core.scoring.functions.ScoringParameters;
 import org.matsim.utils.objectattributes.ObjectAttributes;
 import org.matsim.vehicles.Vehicle;
+import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 
 import javax.inject.Inject;
 
@@ -59,6 +62,7 @@ public class RunCustomScoringExample {
 			}
 
 			sumScoringFunction.addScoringFunction(new RainScoring()); 
+			System.out.println("score!");
 
 			return sumScoringFunction;
 		}
@@ -66,7 +70,12 @@ public class RunCustomScoringExample {
 
 	public static void main(String[] args) {
 		String configFile = "scenarios/equil/example5-config.xml" ;
-		final Scenario scenario = ScenarioUtils.loadScenario(ConfigUtils.loadConfig(configFile));
+		
+		Config config = ConfigUtils.loadConfig(configFile);
+		
+		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		
+		final Scenario scenario = ScenarioUtils.loadScenario(config);
 
 		// Every second person gets a special property which influences their score.
 		// ObjectAttributes can be written to and read from files, so in reality,
@@ -141,3 +150,4 @@ public class RunCustomScoringExample {
 	}
 
 }
+

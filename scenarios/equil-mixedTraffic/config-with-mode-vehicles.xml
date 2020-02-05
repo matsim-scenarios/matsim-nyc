@@ -8,11 +8,11 @@
 	</module>
 
 	<module name="network">
-		<param name="inputNetworkFile" value="C:\Users\User\git\matsim-code-examples\scenarios\equil-mixedTraffic\network.xml" />
+		<param name="inputNetworkFile" value="network.xml" />
 	</module>
 
 	<module name="plans">
-		<param name="inputPlansFile" value="C:\Users\User\git\matsim-code-examples\scenarios\equil-mixedTraffic\plans100.xml" />
+		<param name="inputPlansFile" value="plans100.xml" />
 	</module>
 
 	<module name="controler">
@@ -77,7 +77,7 @@
 	</module>
 	
 	<module name="vehicles" >
-		<param name="vehiclesFile" value="C:\Users\User\git\matsim-code-examples\scenarios\equil-mixedTraffic\mode-vehicles.xml" /> 
+		<param name="vehiclesFile" value="mode-vehicles.xml" /> 
 	</module>
 	
 	<module name="strategy">
@@ -96,7 +96,7 @@
 	
 	<module name="travelTimeCalculator" >
 		<param name="analyzedModes" value="car,bicycle" />
-		<param name="filterModes" value="true" />
+		<param name="separateModes" value="true" />
 	</module>		
 
 </config>

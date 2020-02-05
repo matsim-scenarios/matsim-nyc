@@ -10,6 +10,7 @@ final class RainScoring implements SumScoringFunction.ArbitraryEventScoring {
 	public void handleEvent(Event event) {
 		if (event instanceof RainOnPersonEvent) {
 			score -= 1000.0;
+			System.out.println(score);
 		}
 	}
 

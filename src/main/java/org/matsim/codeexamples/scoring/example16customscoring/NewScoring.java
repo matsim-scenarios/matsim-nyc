@@ -40,9 +40,7 @@ final class NewScoring implements SumScoringFunction.ArbitraryEventScoring{
 			else
 				score -= 10.5*100;
 		}
-			
 	}
-	
 
 	@Override public void finish() {}
 

@@ -38,24 +38,17 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/*args[0]  path of network
- * args[1] CRS
- * args[2] output links
- * args[3] output nodes
- * 
- * */
 public class RunCreateNetworkSHP {
 
 	public static void main(String[] args) {
 
 		Config config = ConfigUtils.createConfig();
-		//config.network().setInputFile("network.xml");
-		config.network().setInputFile(args[0]);
+		config.network().setInputFile("network.xml");
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Network network = scenario.getNetwork();
 
-		//CoordinateReferenceSystem crs = MGC.getCRS("EPSG:21781");    // EPSG Code for Swiss CH1903_LV03 coordinate system
-		CoordinateReferenceSystem crs = MGC.getCRS(args[1]);
+		CoordinateReferenceSystem crs = MGC.getCRS("EPSG:21781");    // EPSG Code for Swiss CH1903_LV03 coordinate system
+
 		Collection<SimpleFeature> features = new ArrayList<>();
 		PolylineFeatureFactory linkFactory = new PolylineFeatureFactory.Builder().
 				setCrs(crs).
@@ -77,8 +70,7 @@ public class RunCreateNetworkSHP {
 					new Object[]{link.getId().toString(), link.getFromNode().getId().toString(), link.getToNode().getId().toString(), link.getLength(), NetworkUtils.getType(link), link.getCapacity(), link.getFreespeed()}, null);
 			features.add(ft);
 		}   
-		//ShapeFileWriter.writeGeometries(features, "output/network_links.shp");
-		ShapeFileWriter.writeGeometries(features, args[2]);
+		ShapeFileWriter.writeGeometries(features, "output/network_links.shp");
 
 		features = new ArrayList<>();
 		PointFeatureFactory nodeFactory = new PointFeatureFactory.Builder().
@@ -91,7 +83,6 @@ public class RunCreateNetworkSHP {
 			SimpleFeature ft = nodeFactory.createPoint(node.getCoord(), new Object[] {node.getId().toString()}, null);
 			features.add(ft);
 		}
-		//ShapeFileWriter.writeGeometries(features, "output/network_nodes.shp");
-		ShapeFileWriter.writeGeometries(features, args[3]);
+		ShapeFileWriter.writeGeometries(features, "output/network_nodes.shp");
 	}
 }

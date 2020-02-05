@@ -19,8 +19,8 @@ class AnalysePlans{
 
     public static void main ( String [] args ) {
 
-        //URL configUrl = IOUtils.newUrl( ExamplesUtils.getTestScenarioURL( "equil" ), "config.xml" );;
-        Config config = ConfigUtils.loadConfig( "D:\\mixed_traffic\\config-with-mode-vehicles.xml" ) ;
+        URL configUrl = IOUtils.newUrl( ExamplesUtils.getTestScenarioURL( "equil" ), "config.xml" );;
+        Config config = ConfigUtils.loadConfig( configUrl ) ;
 
 
         Scenario scenario = ScenarioUtils.loadScenario( config ) ;

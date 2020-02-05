@@ -19,17 +19,11 @@
 
 package org.matsim.codeexamples.network;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.apache.commons.lang.StringUtils;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.network.io.NetworkWriter;
-import org.matsim.utils.objectattributes.attributable.Attributes;
 
 /**
  * @author  jbischoff
@@ -37,58 +31,23 @@ import org.matsim.utils.objectattributes.attributable.Attributes;
  * In this case, we are reducing the capacity of each link by 50%.
  */
 
-
-/*
- * args[0] path to original network
- * args[1] path to modified network
- */
 public class RunModifyNetworkExample {
 
 	public static void main(String[] args) {
 		
 		// read in the network
 		Network network = NetworkUtils.createNetwork();
-		//new MatsimNetworkReader(network).readFile("path-to-network.xml");
-		new MatsimNetworkReader(network).readFile(args[0]);
+		new MatsimNetworkReader(network).readFile("path-to-network.xml");
 		
 		// iterate through all links
 		for (Link l : network.getLinks().values()){
 			//get current capacity
 			double oldCapacity = l.getCapacity();
-			double oldFreespeed = l.getFreespeed();
-			double newCapacity = 0;
-			double newFreespeed = 0;
-			Set<String> linkType = l.getAllowedModes();
-			Set<String> tempt = new HashSet<String>();
-			Id<Link> linkid = l.getId();
-			Attributes temp = l.getAttributes();
-			if(linkType.contains("car")){
-				if(oldFreespeed>33){
-				//newCapacity = oldCapacity * 0.45  ;
-				newFreespeed = oldFreespeed * 0.45  ;
-				String s = StringUtils.strip(linkType.toString(),"[]");
-				tempt.add(s);
-				tempt.add("exp");
-				System.out.println(tempt);
-			}else{
-				//newCapacity = oldCapacity * 0.40  ;
-				newFreespeed = oldFreespeed * 0.40  ;
-				String s = StringUtils.strip(linkType.toString(),"[]");
-				tempt.add(s);
-				tempt.add("art");
-				System.out.println(tempt);
-				
-				//linkType.add(s);
-			}
+			double newCapacity = oldCapacity / 2.0  ;
 			
 			//set new capacity
-			//l.setCapacity(newCapacity);
-			l.setFreespeed(newFreespeed);
-			l.setAllowedModes(tempt);
-			}
-			
+			l.setCapacity(newCapacity);
 		}
-		//new NetworkWriter(network).write("path-to-modified-network.xml");
-		new NetworkWriter(network).write(args[1]);
+		new NetworkWriter(network).write("path-to-modified-network.xml");
 	}
 }

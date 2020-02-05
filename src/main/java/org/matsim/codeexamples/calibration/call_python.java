@@ -32,8 +32,13 @@ public class call_python {
 		// TODO Auto-generated method stub
 
 		call_python p1 = new call_python();
-		p1.run("D:\\calibration_analysis.py",1,1);
+		for(int i = 0; i < 5; i++){
+			for(int j = 0; j < 2; j++){
+				p1.run("D:\\yh1995\\auto-run\\calibration_analysis.py",i,j);
+			}
+		}
 		
+		//p1.run("D:\\yh1995\\auto-run\\calibration_analysis.py",4,0);
 		
 	}
 
