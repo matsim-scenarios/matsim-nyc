@@ -172,7 +172,7 @@ public class RunTimeDependentNetworkExample {
 		Config config = ConfigUtils.loadConfig( args[0] ) ;
 		
 		// "materialize" the road pricing config group:
-		//RoadPricingConfigGroup rpConfig = ConfigUtils.addOrGetModule(config, RoadPricingConfigGroup.class) ;
+		RoadPricingConfigGroup rpConfig = ConfigUtils.addOrGetModule(config, RoadPricingConfigGroup.class) ;
 		
 
 		// configure the time variant network here:
@@ -189,7 +189,7 @@ public class RunTimeDependentNetworkExample {
 		
 		// ---
 	
-		/*
+		
 		// define the toll factor as an anonymous class.  If more flexibility is needed, convert to "full" class.
 		TollFactor tollFactor = new TollFactor(){
 			@Override public double getTollFactor(Id<Person> personId, Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
@@ -208,7 +208,7 @@ public class RunTimeDependentNetworkExample {
 				} ;
 				// instantiate the road pricing scheme, with the toll factor inserted:
 		RoadPricingSchemeUsingTollFactor scheme = new RoadPricingSchemeUsingTollFactor(rpConfig.getTollLinksFile(), tollFactor) ;
-		*/
+		
 			
 			
 		for ( Link link : scenario.getNetwork().getLinks().values() ) {
@@ -440,7 +440,7 @@ public class RunTimeDependentNetworkExample {
 		
 		Controler controler = new Controler( scenario ) ;
 		controler.addOverridingModule(new SwissRailRaptorModule());
-		//controler.addOverridingModule( new RoadPricingModule( schema ) ) ;
+		controler.addOverridingModule( new RoadPricingModule( scheme ) ) ;
 
 
 		
