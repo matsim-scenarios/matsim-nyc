@@ -197,13 +197,12 @@ public class RunTimeDependentNetworkExample {
 
 		       // String type = scenario.getVehicles().getTransitVehicles().getVehicles().get( vehicleId ).getType().getDescription();
 
-		                if ( vehicleId.toString().contains("bus")||vehicleId.toString().contains("subway") ||vehicleId.toString().contains("rail") ||vehicleId.toString().contains("FHV") ||vehicleId.toString().contains("taxi") ) {
+		                if ( scenario.getVehicles().getVehicles().get( vehicleId ).getType().getId().toString().equals( "car" ) ) {
+                    			return 1 ;
 
-		                                return 0 ;
+						} else {
 
-		                } else {
-
-		                                return 1 ;
+                    		return 0 ;
 						}
 					}
 				} ;
@@ -259,8 +258,8 @@ public class RunTimeDependentNetworkExample {
 			double ArterialFactor1 []= {0.53467228,0.4,0.56532772,0.56532772,0.56532772,0.56532772}; 
 			*/
 			
-			double ExpressFactor []= {0.395941339,0.72934814,0.3,0.508829733,0.799287589,0.47065186};
-			double ArterialFactor []= {0.3,0.408829733,0.627227856,0.653203748,0.404058661,0.560570163};
+			double ExpressFactor []= {0.613199347,0.688515313,0.508699944,0.629440634,0.548097453,0.676586581};
+			double ArterialFactor []= {0.588515313,0.511484687,0.570559366,0.4952434,0.461553997,0.68401591};
 			double ExpressFactor1 []= {0.472941,0.497564,0.502572, 0.435369, 0.484185, 0.568571}; // 33.33m/s 
 			double ArterialFactor1 []= {0.276634, 0.265192,0.261024, 0.254357,0.279059,0.308127}; //22.22 m/s
 			double ArterialFactor2 []= {0.409828,0.392877,0.386702,0.376825,0.413420,0.456485};// 15 m/s
@@ -441,7 +440,7 @@ public class RunTimeDependentNetworkExample {
 		
 		Controler controler = new Controler( scenario ) ;
 		controler.addOverridingModule(new SwissRailRaptorModule());
-		//controler.addOverridingModule( new RoadPricingModule(  ) ) ;
+		//controler.addOverridingModule( new RoadPricingModule( schema ) ) ;
 
 
 		
